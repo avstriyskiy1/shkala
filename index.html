@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Шкала — конвертер оценок</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#C0392B">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=PT+Serif:wght@400;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAFAF7;
+    --card:#FFFFFF;
+    --ink:#1B2430;
+    --ink-soft:#5B6472;
+    --muted:#9AA1AB;
+    --red:#C0392B;
+    --red-dim:#C0392B1a;
+    --grid:#E7E9ED;
+    --green:#3F7D5C;
+    --radius:7px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:26px 26px;
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:28px 16px 60px;
+  }
+  .app{ width:100%; max-width:460px; }
+
+  .app-header{ margin-bottom:22px; padding-left:2px; }
+  .app-header h1{
+    font-family:'PT Serif',serif; font-weight:700; font-size:2.35rem; margin:0;
+    letter-spacing:-0.01em; position:relative; display:inline-block;
+  }
+  .app-header h1::after{
+    content:""; position:absolute; left:2px; right:2px; bottom:2px; height:9px;
+    background:var(--red-dim); z-index:-1; transform:skewX(-6deg);
+  }
+  .app-header .tagline{ margin:6px 0 0; color:var(--ink-soft); font-size:0.92rem; }
+
+  .tabs{ display:flex; gap:4px; padding:0 2px; }
+  .tab{
+    flex:1; background:#EFEEE8; color:var(--ink-soft); border:none; border-bottom:2px solid transparent;
+    font-family:'Inter',sans-serif; font-weight:600; font-size:0.82rem; padding:12px 4px 10px; cursor:pointer;
+    clip-path:polygon(6% 0, 94% 0, 100% 100%, 0% 100%); transition:background .18s ease, color .18s ease;
+  }
+  .tab:hover{ color:var(--ink); }
+  .tab.active{ background:var(--card); color:var(--red); }
+
+  .card{ background:var(--card); border:1px solid var(--grid); border-radius:0 0 var(--radius) var(--radius); padding:26px 22px 24px; }
+
+  .panel{ display:none; }
+  .panel.active{ display:block; }
+
+  .panel-title{ font-family:'PT Serif',serif; font-size:1.3rem; font-weight:700; margin:0 0 4px; }
+  .panel-sub{ color:var(--ink-soft); font-size:0.88rem; line-height:1.4; margin:0 0 20px; }
+
+  .field-label{ font-size:0.78rem; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin-bottom:8px; display:block; }
+
+  /* ---------- CONVERTER TAB ---------- */
+  .sync-block{
+    border:1.5px solid var(--grid); border-radius:var(--radius); padding:16px; margin-bottom:14px;
+    transition:border-color .2s ease, background .2s ease;
+  }
+  .sync-block.active-source{ border-color:var(--red); background:var(--red-dim); }
+  .sync-block-label{
+    font-size:0.76rem; font-weight:700; text-transform:uppercase; letter-spacing:.04em;
+    color:var(--muted); margin-bottom:10px; display:block;
+  }
+  .sync-block.active-source .sync-block-label{ color:var(--red); }
+
+  .grade-buttons{ display:flex; gap:8px; }
+  .grade-btn{
+    flex:1; height:52px; border:1.5px solid var(--grid); background:var(--paper);
+    border-radius:6px; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:1.1rem;
+    color:var(--ink); cursor:pointer; transition:border-color .15s ease, transform .1s ease;
+  }
+  .grade-btn:hover{ border-color:var(--red); color:var(--red); }
+  .grade-btn.selected{ border-color:var(--red); background:var(--card); color:var(--red); }
+  .grade-btn:active{ transform:scale(0.95); }
+
+  .percent-input-wrap{ display:flex; align-items:center; gap:10px; }
+  .percent-input-wrap input{
+    flex:1; font-family:'JetBrains Mono',monospace; font-size:1.4rem; font-weight:700;
+    padding:10px 12px; border:1.5px solid var(--grid); border-radius:6px; background:var(--paper); color:var(--ink);
+    text-align:center;
+  }
+  .percent-input-wrap input:focus{ outline:none; border-color:var(--red); }
+  .percent-input-wrap .suffix{ color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:1rem; }
+
+  .ects-buttons{ display:flex; gap:6px; flex-wrap:wrap; }
+  .ects-btn{
+    flex:1; min-width:42px; height:52px; border:1.5px solid var(--grid); background:var(--paper);
+    border-radius:6px; font-family:'JetBrains Mono',monospace; font-weight:700; font-size:1.05rem;
+    color:var(--ink); cursor:pointer; transition:border-color .15s ease, transform .1s ease;
+  }
+  .ects-btn:hover{ border-color:var(--red); color:var(--red); }
+  .ects-btn.selected{ border-color:var(--red); background:var(--card); color:var(--red); }
+  .ects-btn:active{ transform:scale(0.95); }
+
+  .hint-text{ color:var(--muted); font-size:0.8rem; line-height:1.5; margin:16px 2px 0; }
+
+  /* ---------- GPA TAB ---------- */
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; min-height:38px; margin-bottom:4px; align-items:flex-start; }
+  .chip{
+    display:inline-flex; align-items:center; gap:6px; background:var(--paper);
+    border:1px solid var(--grid); border-radius:20px; padding:5px 8px 5px 12px;
+    font-family:'JetBrains Mono',monospace; font-weight:600; font-size:0.9rem;
+  }
+  .chip button{ border:none; background:transparent; color:var(--muted); cursor:pointer; font-size:1rem; line-height:1; padding:2px; }
+  .chip button:hover{ color:var(--red); }
+  .chips-empty{ color:var(--muted); font-size:0.85rem; font-style:italic; padding:8px 2px; }
+
+  .result-wrap{ display:flex; justify-content:center; padding:20px 0 10px; }
+  .result-mark{ position:relative; width:140px; height:140px; display:flex; align-items:center; justify-content:center; }
+  .result-mark svg{ position:absolute; top:0; left:0; width:100%; height:100%; }
+  .circle-path{
+    fill:none; stroke:var(--red); stroke-width:3.5; stroke-linecap:round;
+    stroke-dasharray:220; stroke-dashoffset:220; transition:stroke-dashoffset .7s cubic-bezier(.4,0,.2,1);
+  }
+  .circle-path.drawn{ stroke-dashoffset:0; }
+  .result-number{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:2rem; color:var(--ink); position:relative; z-index:1; }
+
+  .stats-row{ display:flex; justify-content:space-between; padding:12px 2px; border-top:1px dashed var(--grid); font-size:0.9rem; }
+  .stats-row:first-of-type{ border-top:none; margin-top:10px; }
+  .stats-row .label{ color:var(--ink-soft); }
+  .stats-row .value{ font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--ink); }
+
+  footer{ text-align:center; color:var(--muted); font-size:0.76rem; margin-top:20px; padding:0 12px; line-height:1.5; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="app-header">
+    <h1>Шкала</h1>
+    <p class="tagline">конвертер оценок между системами</p>
+  </div>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="convert">Конвертер</button>
+    <button class="tab" data-tab="gpa">Средний балл</button>
+  </nav>
+
+  <div class="card">
+
+    <!-- CONVERTER TAB -->
+    <section class="panel active" id="panel-convert">
+      <h2 class="panel-title">Конвертер оценки</h2>
+      <p class="panel-sub">Введи в любом поле — остальные два пересчитаются сами.</p>
+
+      <div class="sync-block" id="block-five">
+        <span class="sync-block-label">5-балльная</span>
+        <div class="grade-buttons" id="five-buttons"></div>
+      </div>
+
+      <div class="sync-block" id="block-hundred">
+        <span class="sync-block-label">100-балльная</span>
+        <div class="percent-input-wrap">
+          <input type="number" id="hundred-input" min="0" max="100" placeholder="0">
+          <span class="suffix">из 100</span>
+        </div>
+      </div>
+
+      <div class="sync-block" id="block-ects">
+        <span class="sync-block-label">ECTS</span>
+        <div class="ects-buttons" id="ects-buttons"></div>
+      </div>
+
+      <p class="hint-text">Соответствие шкал усреднённое и носит справочный характер — точные критерии перевода оценок устанавливает твой вуз.</p>
+    </section>
+
+    <!-- GPA TAB -->
+    <section class="panel" id="panel-gpa">
+      <h2 class="panel-title">Средний балл</h2>
+      <p class="panel-sub">Добавь оценки по 5-балльной шкале — покажем средний балл во всех трёх системах.</p>
+
+      <span class="field-label">Добавить оценку</span>
+      <div class="grade-buttons" id="gpa-grade-buttons"></div>
+
+      <span class="field-label" style="margin-top:16px;">Оценки</span>
+      <div class="chips" id="gpa-chips"></div>
+
+      <div class="result-wrap">
+        <div class="result-mark">
+          <svg viewBox="0 0 140 140">
+            <path class="circle-path" id="gpa-circle" pathLength="220"
+              d="M70,10 C100,9,125,33,124,68 C123,103,99,127,69,126 C39,125,15,101,16,68 C17,35,40,11,70,10 Z"/>
+          </svg>
+          <span class="result-number" id="gpa-result">—</span>
+        </div>
+      </div>
+
+      <div class="stats-row"><span class="label">100-балльная</span><span class="value" id="gpa-hundred">—</span></div>
+      <div class="stats-row"><span class="label">ECTS</span><span class="value" id="gpa-ects">—</span></div>
+    </section>
+
+  </div>
+
+  <footer>Расчёты не сохраняются между открытиями — приложение работает офлайн, ничего никуда не отправляет.</footer>
+</div>
+
+<script>
+  // ---------- Tabs ----------
+  const tabs = document.querySelectorAll('.tab');
+  const panels = document.querySelectorAll('.panel');
+  tabs.forEach(tab=>{
+    tab.addEventListener('click', ()=>{
+      tabs.forEach(t=>t.classList.remove('active'));
+      panels.forEach(p=>p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-'+tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ---------- Conversion tables ----------
+  // Anchor percent for each 5-point grade (midpoint of its bucket)
+  const FIVE_TO_PERCENT = { 2: 30, 3: 67, 4: 82, 5: 95 };
+  // Anchor percent for each ECTS letter (midpoint of its bucket)
+  const ECTS_ORDER = ['A','B','C','D','E','FX','F'];
+  const ECTS_TO_PERCENT = { A: 95, B: 85, C: 78, D: 70, E: 63, FX: 47, F: 18 };
+
+  function percentToFive(p){
+    if(p >= 90) return 5;
+    if(p >= 75) return 4;
+    if(p >= 60) return 3;
+    return 2;
+  }
+  function percentToEcts(p){
+    if(p >= 90) return 'A';
+    if(p >= 82) return 'B';
+    if(p >= 75) return 'C';
+    if(p >= 67) return 'D';
+    if(p >= 60) return 'E';
+    if(p >= 36) return 'FX';
+    return 'F';
+  }
+
+  // ---------- Converter tab state ----------
+  const fiveButtonsWrap = document.getElementById('five-buttons');
+  const ectsButtonsWrap = document.getElementById('ects-buttons');
+  const hundredInput = document.getElementById('hundred-input');
+
+  [2,3,4,5].forEach(g=>{
+    const btn = document.createElement('button');
+    btn.className = 'grade-btn';
+    btn.textContent = g;
+    btn.addEventListener('click', ()=>{ syncFromFive(g); });
+    fiveButtonsWrap.appendChild(btn);
+  });
+
+  ECTS_ORDER.forEach(letter=>{
+    const btn = document.createElement('button');
+    btn.className = 'ects-btn';
+    btn.textContent = letter;
+    btn.addEventListener('click', ()=>{ syncFromEcts(letter); });
+    ectsButtonsWrap.appendChild(btn);
+  });
+
+  function highlightSource(sourceId){
+    ['block-five','block-hundred','block-ects'].forEach(id=>{
+      document.getElementById(id).classList.toggle('active-source', id === sourceId);
+    });
+  }
+
+  function setFiveSelected(grade){
+    fiveButtonsWrap.querySelectorAll('.grade-btn').forEach(b=>{
+      b.classList.toggle('selected', Number(b.textContent) === grade);
+    });
+  }
+  function setEctsSelected(letter){
+    ectsButtonsWrap.querySelectorAll('.ects-btn').forEach(b=>{
+      b.classList.toggle('selected', b.textContent === letter);
+    });
+  }
+
+  function syncFromFive(grade){
+    const percent = FIVE_TO_PERCENT[grade];
+    setFiveSelected(grade);
+    hundredInput.value = percent;
+    setEctsSelected(percentToEcts(percent));
+    highlightSource('block-five');
+  }
+
+  function syncFromHundred(percent){
+    percent = Math.max(0, Math.min(100, percent));
+    setFiveSelected(percentToFive(percent));
+    setEctsSelected(percentToEcts(percent));
+    highlightSource('block-hundred');
+  }
+
+  function syncFromEcts(letter){
+    const percent = ECTS_TO_PERCENT[letter];
+    setEctsSelected(letter);
+    hundredInput.value = percent;
+    setFiveSelected(percentToFive(percent));
+    highlightSource('block-ects');
+  }
+
+  hundredInput.addEventListener('input', ()=>{
+    const v = hundredInput.value;
+    if(v === '') return;
+    syncFromHundred(Number(v));
+  });
+
+  // initial state
+  syncFromFive(4);
+
+  // ---------- GPA tab ----------
+  const gpaGrades = [];
+  const gpaBtnWrap = document.getElementById('gpa-grade-buttons');
+  [2,3,4,5].forEach(g=>{
+    const btn = document.createElement('button');
+    btn.className = 'grade-btn';
+    btn.textContent = g;
+    btn.addEventListener('click', ()=>{ gpaGrades.push(g); renderGpaChips(); });
+    gpaBtnWrap.appendChild(btn);
+  });
+
+  function markGpaCircle(){
+    const el = document.getElementById('gpa-circle');
+    el.classList.remove('drawn');
+    void el.offsetWidth;
+    el.classList.add('drawn');
+  }
+
+  function renderGpaChips(){
+    const wrap = document.getElementById('gpa-chips');
+    wrap.innerHTML = '';
+    if(gpaGrades.length === 0){
+      wrap.innerHTML = '<span class="chips-empty">Пока пусто — нажми на цифру выше</span>';
+    } else {
+      gpaGrades.forEach((g,i)=>{
+        const chip = document.createElement('span');
+        chip.className = 'chip';
+        chip.innerHTML = g + ' <button aria-label="Удалить">✕</button>';
+        chip.querySelector('button').addEventListener('click', ()=>{
+          gpaGrades.splice(i,1);
+          renderGpaChips();
+        });
+        wrap.appendChild(chip);
+      });
+    }
+    computeGpaResult();
+  }
+
+  function computeGpaResult(){
+    const resultEl = document.getElementById('gpa-result');
+    const hundredEl = document.getElementById('gpa-hundred');
+    const ectsEl = document.getElementById('gpa-ects');
+
+    if(gpaGrades.length === 0){
+      resultEl.textContent = '—';
+      hundredEl.textContent = '—';
+      ectsEl.textContent = '—';
+      return;
+    }
+    const sum = gpaGrades.reduce((a,b)=>a+b,0);
+    const avg = sum / gpaGrades.length;
+    const percent = Math.round(((avg - 2) / 3) * 100);
+    const clampedPercent = Math.max(0, Math.min(100, percent));
+
+    resultEl.textContent = avg.toFixed(2);
+    hundredEl.textContent = clampedPercent + ' из 100';
+    ectsEl.textContent = percentToEcts(clampedPercent);
+    markGpaCircle();
+  }
+
+  renderGpaChips();
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('sw.js').catch(()=>{});
+    });
+  }
+</script>
+
+</body>
+</html>
